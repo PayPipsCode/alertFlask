@@ -23,7 +23,7 @@ class Config:
     TELEGRAM_BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN')
     
     # Base URL (used for callbacks)
-    BASE_URL = os.environ.get('BASE_URL', 'http://localhost:5000')
+    BASE_URL = os.environ.get('BASE_URL')
 
 
 

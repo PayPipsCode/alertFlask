@@ -1,3 +1,4 @@
+# backend/utils/payment_utils.py
 import requests
 from flask import current_app
 
@@ -9,7 +10,7 @@ def create_paystack_payment(subscriber, amount):
     }
     data = {
         "email": subscriber.email,
-        "amount": amount,
+        "amount": amount,  # amount in kobo (if using NGN)
         "metadata": {
             "subscriber_id": subscriber.id
         },
