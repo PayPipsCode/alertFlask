@@ -17,7 +17,7 @@ def create_app():
     app.config.from_object(Config)
     
     # Enable CORS for all routes (or restrict to your client domain)
-    CORS(app, resources={r"/api/*": {"origins": "https://alertclient-production.up.railway.app"}})
+    CORS(app)
     # If you want to allow all origins during debugging, use:
     # CORS(app)
     
