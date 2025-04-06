@@ -51,3 +51,4 @@ Flask
 Flask-SQLAlchemy
 Flask-Migrate
 requests
+flask-cors
