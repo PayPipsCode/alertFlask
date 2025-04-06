@@ -22,9 +22,8 @@ def register_owner():
     
     # Generate unique token and signup link
     token = str(uuid.uuid4())
-    base_url = current_app.config.get('BASE_URL').rstrip('/')
-    unique_link = f"{base_url}/api/subscriber/signup?token={token}"
-    
+    unique_link = f"https://alertclient-production.up.railway.app/subscriber/signup?token={token}"
+
     owner = CommunityOwner(
         name=name,
         email=email,
