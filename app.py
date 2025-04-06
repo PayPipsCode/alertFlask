@@ -4,6 +4,7 @@ from flask import Flask, send_from_directory
 from config import Config
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
+from flask_cors import CORS
 
 db = SQLAlchemy()
 migrate = Migrate()
@@ -16,6 +17,9 @@ def create_app():
     app = Flask(__name__, static_folder=react_build_dir, static_url_path='/')
     app.config.from_object(Config)
     
+    # Enable CORS for all routes (for development, you might restrict this in production)
+    CORS(app)  # This will allow requests from any origin
+
     logging.basicConfig(level=logging.DEBUG,
                         format='%(asctime)s [%(levelname)s] %(message)s')
     logging.info("Starting AlertBySyncgram backend...")
