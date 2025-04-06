@@ -34,12 +34,15 @@ def create_app():
     from routes.paystack import paystack_bp
     from routes.twilio import twilio_bp
     from routes.alerts import alerts_bp
+    from routes.telegram_bot import telegram_bp
+
 
     app.register_blueprint(owner_bp, url_prefix='/api/owner')
     app.register_blueprint(subscriber_bp, url_prefix='/api/subscriber')
     app.register_blueprint(paystack_bp, url_prefix='/api/paystack')
     app.register_blueprint(twilio_bp, url_prefix='/api/twilio')
     app.register_blueprint(alerts_bp, url_prefix='/api/alerts')
+    app.register_blueprint(telegram_bp, url_prefix='/telegram')
     
     @app.route('/', defaults={'path': ''})
     @app.route('/<path:path>')

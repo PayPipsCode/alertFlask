@@ -1,85 +1,43 @@
 from flask import Blueprint, request, jsonify
-from models.community_owner import CommunityOwner
-from app import db
-import uuid
+import logging
+import requests
+from config import Config  # Ensure your Config contains your bot token
 
-telegram_bp = Blueprint('telegram_bot', __name__, url_prefix='/telegram')
+telegram_bp = Blueprint('telegram_bp', __name__)
 
-@telegram_bp.route('/onboard', methods=['POST'])
-def onboard():
+def send_telegram_message(chat_id, text):
     """
-    Endpoint for community owner onboarding.
-    Expects JSON with keys: telegram_id, name, channel_name.
+    Sends a message to a Telegram chat using the Bot API.
     """
-    data = request.json
-    if not data:
-        return jsonify({'error': 'No data provided'}), 400
+    token = Config.TELEGRAM_BOT_TOKEN  # Make sure this is set in your config
+    url = f"https://api.telegram.org/bot{token}/sendMessage"
+    payload = {
+        "chat_id": chat_id,
+        "text": text
+    }
+    try:
+        response = requests.post(url, json=payload)
+        logging.info("Sent message to chat_id %s: %s", chat_id, response.json())
+    except Exception as e:
+        logging.exception("Failed to send message via Telegram")
 
-    telegram_id = data.get('telegram_id')
-    name = data.get('name')
-    channel_name = data.get('channel_name')
+@telegram_bp.route('/webhook', methods=['POST'])
+def webhook():
+    update = request.get_json()
+    logging.info("Received Telegram update: %s", update)
     
-    if not telegram_id or not name or not channel_name:
-        return jsonify({'error': 'Missing required fields'}), 400
+    # Check if this update contains a message with text
+    if "message" in update:
+        message = update["message"]
+        chat_id = message["chat"]["id"]
+        text = message.get("text", "")
+        
+        # Check for the /start command
+        if text.strip() == "/start":
+            send_telegram_message(chat_id, "Welcome to AlertBySyncgram! How can I help you today?")
+        else:
+            # Here you can add handling for other commands or messages
+            logging.info("Received message: %s", text)
     
-    # Generate a unique token and link for signup.
-    token = str(uuid.uuid4())
-    base_url = request.host_url.rstrip('/')
-    unique_link = f"{base_url}/telegram/signup?token={token}"
-    
-    community_owner = CommunityOwner(
-        telegram_id=telegram_id,
-        name=name,
-        channel_name=channel_name,
-        token=token,
-        unique_link=unique_link
-    )
-    db.session.add(community_owner)
-    db.session.commit()
-    
-    return jsonify({'message': 'Onboarding successful', 'unique_link': unique_link}), 200
-
-@telegram_bp.route('/signup', methods=['GET', 'POST'])
-def signup():
-    """
-    Endpoint for subscriber signup.
-    GET: Returns instructions.
-    POST: Expects JSON with: name, email, phone, token.
-    """
-    if request.method == 'GET':
-        token = request.args.get('token')
-        return jsonify({
-            'message': 'Please POST your details: name, email, phone, and token',
-            'token': token
-        })
-    else:
-        data = request.json
-        token = data.get('token')
-        name = data.get('name')
-        email = data.get('email')
-        phone = data.get('phone')
-        
-        if not all([token, name, email, phone]):
-            return jsonify({'error': 'Missing fields'}), 400
-        
-        # Find the community owner using the token.
-        community_owner = CommunityOwner.query.filter_by(token=token).first()
-        if not community_owner:
-            return jsonify({'error': 'Invalid token'}), 400
-        
-        # Create the subscriber with pending payment status.
-        from models.subscriber import Subscriber
-        subscriber = Subscriber(
-            name=name,
-            email=email,
-            phone_number=phone,
-            community_owner_id=community_owner.id,
-            payment_status='pending'
-        )
-        db.session.add(subscriber)
-        db.session.commit()
-        
-        return jsonify({
-            'message': 'Signup successful. Proceed to payment.',
-            'subscriber_id': subscriber.id
-        }), 200
+    # Always return a 200 OK so Telegram doesn't retry
+    return jsonify({'ok': True}), 200
