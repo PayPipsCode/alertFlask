@@ -13,7 +13,7 @@ MAX_RETRIES = 2  # Adjust as needed
 @twilio_bp.route('/voice', methods=['GET', 'POST'])
 def voice():
     # Retrieve the message to speak from query parameters
-    msg = request.args.get('msg', 'This is an alert from AlertBySyncgram.')
+    msg = request.args.get('This is an alert from AlertBySyncgram.')
     logging.info("Generating TwiML voice response with message: %s", msg)
     
     response = VoiceResponse()
