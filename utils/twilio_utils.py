@@ -1,6 +1,8 @@
 import logging
 from twilio.rest import Client
 from flask import current_app
+from urllib.parse import quote_plus
+
 
 def initiate_twilio_call(phone_number, message):
     logging.debug("Initiating Twilio call to %s with message: %s", phone_number, message)
@@ -10,11 +12,14 @@ def initiate_twilio_call(phone_number, message):
     
     client = Client(account_sid, auth_token)
     
+    # URL encode the message so it is safe to pass in a query string
+    encoded_message = quote_plus(message)
+    
     try:
         call = client.calls.create(
             to=phone_number,
             from_=twilio_phone_number,
-            url=f"{current_app.config.get('BASE_URL')}/api/twilio/voice?msg={message}",
+            url=f"{current_app.config.get('BASE_URL')}/api/twilio/voice?msg={encoded_message}",
             status_callback=f"{current_app.config.get('BASE_URL')}/api/twilio/status_callback",
             status_callback_event=['completed']
         )
