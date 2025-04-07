@@ -1,3 +1,4 @@
+# models/community_owner.py
 from app import db
 
 class CommunityOwner(db.Model):
@@ -10,6 +11,7 @@ class CommunityOwner(db.Model):
     token = db.Column(db.String(64), unique=True, nullable=False)
     unique_link = db.Column(db.String(256), unique=True, nullable=False)
     telegram_bot_username = db.Column(db.String(64), default='@AlertBySyncgramBot')
-    
+    group_chat_id = db.Column(db.BigInteger, nullable=True)  # New field for mapping
+
     subscribers = db.relationship('Subscriber', backref='owner', lazy=True)
     alert_logs = db.relationship('AlertLog', backref='owner', lazy=True)
