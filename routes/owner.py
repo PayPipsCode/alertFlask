@@ -26,7 +26,7 @@ def register_owner():
     
     # Generate unique token and signup link
     token = str(uuid.uuid4())
-    unique_link = f"{Config.FRONTEND_URL}/subscriber/signup?token={token}"
+    unique_link = f"{Config.FRONTEND_URL}?token={token}"
 
     group = CommunityOwner.query.filter_by(group_chat_id=group_id).first()
     if group:
