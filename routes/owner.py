@@ -26,14 +26,15 @@ def register_owner():
     
     # Generate unique token and signup link
     token = str(uuid.uuid4())
-    unique_link = f"{Config.FRONTEND_URL}?token={token}"
-
     group = CommunityOwner.query.filter_by(group_chat_id=group_id).first()
+
     if group:
         return jsonify({
             'message': 'Group already registered',
-            'unique_link': unique_link,
+            'unique_link': group.unique_link,
         }), 200
+
+    unique_link = f"{Config.FRONTEND_URL}?token={token}"
 
     owner = CommunityOwner(
         name=name,
