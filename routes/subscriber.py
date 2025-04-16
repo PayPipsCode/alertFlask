@@ -14,7 +14,7 @@ subscriber_bp = Blueprint('subscriber_bp', __name__)
 def register_subscriber():
     logging.info("Received subscriber registration request")
     data = request.json
-    name = data['name']
+    name = data.get('name')
     email = data.get('email')
     phone_number = data.get('phone')
     token = data.get('token')
