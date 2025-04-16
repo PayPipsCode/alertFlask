@@ -10,12 +10,12 @@ import logging
 db = SQLAlchemy()
 migrate = Migrate()
 
+base_dir = os.path.abspath(os.path.dirname(__file__))
+react_build_dir = os.path.join(base_dir, '../client/dist')
+app = Flask(__name__, static_folder=react_build_dir, static_url_path='/')
+
 
 def create_app():
-    base_dir = os.path.abspath(os.path.dirname(__file__))
-    react_build_dir = os.path.join(base_dir, '../client/dist')
-    
-    app = Flask(__name__, static_folder=react_build_dir, static_url_path='/')
     app.config.from_object(Config)
     
     # Enable CORS for all routes (or restrict to your client domain)
