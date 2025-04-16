@@ -55,9 +55,7 @@ def create_app():
     return app
 
 
-# This is what gunicorn will use
 app = create_app()
 
-# When running `flask db upgrade` this will be used thanks to our FLASK_APP env var
 if __name__ == '__main__':
     app.run(debug=True)
