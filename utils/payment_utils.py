@@ -46,7 +46,7 @@ def create_kora_payment(subscriber: Subscriber, amount):
         },
         "reference": reference,
         "merchant_bears_cost": False,
-        "redirect_url": "http://localhost:8000/api/subscriber/payment-status",
+        "redirect_url": Config.FRONTEND_REDIRECT_URL,
     }
 
     response = requests.post("https://api.korapay.com/merchant/api/v1/charges/initialize", json=data, headers=headers)
@@ -59,7 +59,7 @@ def create_kora_payment(subscriber: Subscriber, amount):
     if res_data.get("status"):
         return res_data["data"]["checkout_url"]
     else:
-        raise Exception("Failed to initiate Kora payment")
+        raise Exception(f"Failed to initiate Kora payment: {res_data}")
 
 
 def create_paystack_payment(subscriber, amount):
