@@ -11,7 +11,7 @@ class Config:
     
     # Database configuration
 
-    SQLALCHEMY_DATABASE_URI = 'postgresql://btega:admin@localhost/alert_syncgram'
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # Twilio configuration

@@ -14,11 +14,12 @@ subscriber_bp = Blueprint('subscriber_bp', __name__)
 def register_subscriber():
     logging.info("Received subscriber registration request")
     data = request.json
+    name = data['name']
     email = data.get('email')
     phone_number = data.get('phone')
     token = data.get('token')
     
-    if not all([email, phone_number, token]):
+    if not all([name, email, phone_number, token]):
         logging.error("Missing required fields for subscriber registration")
         return jsonify({'error': 'Missing required fields'}), 400
 
@@ -37,11 +38,12 @@ def register_subscriber():
         )
         .first()
     )
+
     if existing_subscriber:
         return bad_request("Phone number already registered for this community")
 
     subscriber = Subscriber(
-        name=owner.name,
+        name=name,
         email=email,
         phone_number=phone_number,
         payment_plan="",
@@ -59,7 +61,7 @@ def register_subscriber():
         logging.exception("Failed to initialize payment")
         return bad_request("Payment initialization failed", 500)
 
-    logging.info(f"Subscriber registered: {owner.name}")
+    logging.info(f"Subscriber registered: {name}")
     return jsonify({
         'message': 'Registration successful. Proceed to payment.',
         'subscriber_id': subscriber.id,
