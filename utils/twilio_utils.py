@@ -2,6 +2,11 @@ import logging
 from twilio.rest import Client
 from flask import current_app
 from urllib.parse import quote_plus
+from datetime import datetime, timezone, timedelta
+
+from models.call_logs import CallLog
+
+MAX_DAILY_CALL_LIMIT = 2
 
 
 def initiate_twilio_call(phone_number, message):
@@ -12,7 +17,7 @@ def initiate_twilio_call(phone_number, message):
     
     client = Client(account_sid, auth_token)
     
-    # URL encode the message so it is safe to pass in a query string
+    # URL encode the message, so it is safe to pass in a query string
     encoded_message = quote_plus(message)
     
     try:
@@ -28,3 +33,17 @@ def initiate_twilio_call(phone_number, message):
     except Exception as e:
         logging.exception("Failed to initiate Twilio call to %s", phone_number)
         raise
+
+
+def has_exceeded_daily_limit(phone_number, max_calls=MAX_DAILY_CALL_LIMIT):
+    # Get the start of today in UTC
+    now = datetime.now(timezone.utc)
+    start_of_day = datetime(now.year, now.month, now.day, tzinfo=timezone.utc)
+
+    # We need to query for calls matching the phone number made after start of day
+    call_count = CallLog.query.filter(
+        CallLog.phone_number == phone_number,
+        CallLog.called_at >= start_of_day
+    ).count()
+
+    return call_count >= max_calls

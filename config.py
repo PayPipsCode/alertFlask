@@ -1,4 +1,8 @@
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
 
 class Config:
     # Flask settings
@@ -7,7 +11,7 @@ class Config:
     
     # Database configuration
 
-    SQLALCHEMY_DATABASE_URI = 'postgresql://postgres:TTGAMLWDBwoNOsrdGHnZgVEinNyBiwzH@caboose.proxy.rlwy.net:31157/railway'
+    SQLALCHEMY_DATABASE_URI = 'postgresql://btega:admin@localhost/alert_syncgram'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # Twilio configuration
@@ -24,6 +28,8 @@ class Config:
     
     # Base URL (used for callbacks)
     BASE_URL = os.environ.get('BASE_URL')
+    KORA_SECRET_KEY = os.environ.get('KORA_SECRET_KEY')
 
-
-
+    SYNC_GRAM_AUTH_TOKEN = os.environ.get('SYNC_GRAM_AUTH_TOKEN')
+    FRONTEND_URL = os.environ.get('FRONTEND_URL')
+    FRONTEND_REDIRECT_URL = os.environ.get('FRONTEND_REDIRECT_URL')

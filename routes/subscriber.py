@@ -1,65 +1,87 @@
 # backend/routes/subscriber.py
-from flask import Blueprint, request, jsonify, current_app
+from flask import Blueprint, request, jsonify
 from models.subscriber import Subscriber
 from models.community_owner import CommunityOwner
 from app import db
-import uuid
 import logging
-from utils.payment_utils import create_paystack_payment
+from utils.payment_utils import create_payment
+from utils.web import bad_request
 
 subscriber_bp = Blueprint('subscriber_bp', __name__)
+
 
 @subscriber_bp.route('/register', methods=['POST'])
 def register_subscriber():
     logging.info("Received subscriber registration request")
     data = request.json
-    name = data.get('name')
     email = data.get('email')
     phone_number = data.get('phone')
     token = data.get('token')
-    payment_plan = data.get('payment_plan')  # 'Basic' or 'Standard'
-    terms = data.get('terms')  # boolean
     
-    if not all([name, email, phone_number, token, payment_plan, terms]):
+    if not all([email, phone_number, token]):
         logging.error("Missing required fields for subscriber registration")
         return jsonify({'error': 'Missing required fields'}), 400
-    
+
     owner = CommunityOwner.query.filter_by(token=token).first()
     if not owner:
         logging.error("Invalid owner token provided")
-        return jsonify({'error': 'Invalid token'}), 400
-    
+        return bad_request("Invalid token")
+
+    existing_subscriber = (
+        db.session.query(Subscriber)
+        .join(CommunityOwner)
+        .filter(
+            CommunityOwner.token == token,
+            Subscriber.phone_number == phone_number,
+            Subscriber.payment_status == 'confirmed'
+        )
+        .first()
+    )
+    if existing_subscriber:
+        return bad_request("Phone number already registered for this community")
+
     subscriber = Subscriber(
-        name=name,
+        name=owner.name,
         email=email,
         phone_number=phone_number,
-        payment_plan=payment_plan,
+        payment_plan="",
         community_owner_id=owner.id,
         payment_status='pending'
     )
     db.session.add(subscriber)
     db.session.commit()
-    
-    # Determine the amount based on the selected payment plan.
-    if payment_plan == "Basic":
-        amount = 1899 * 100  # e.g., 1899 NGN in kobo
-    elif payment_plan == "Standard":
-        amount = 2999 * 100
-    else:
-        amount = 0
+
+    amount = 1000
     
     try:
-        payment_url = create_paystack_payment(subscriber, amount)
+        payment_url = create_payment(subscriber, amount)
     except Exception as e:
         logging.exception("Failed to initialize payment")
-        return jsonify({'error': 'Payment initialization failed'}), 500
+        return bad_request("Payment initialization failed", 500)
 
-    logging.info(f"Subscriber registered: {name}")
+    logging.info(f"Subscriber registered: {owner.name}")
     return jsonify({
         'message': 'Registration successful. Proceed to payment.',
         'subscriber_id': subscriber.id,
         'payment_url': payment_url  # This URL will be used on the client side
     }), 200
+
+
+@subscriber_bp.route('/payment-status', methods=['GET'])
+def payment_status():
+    reference = request.args.get('reference', None)
+
+    if not reference:
+        return bad_request("Missing reference parameter")
+
+    subscriber = Subscriber.query.filter_by(txn_id=reference).first()
+    if not subscriber:
+        return bad_request("Subscription not found", 404)
+
+    community_name = subscriber.owner.community_name
+    return jsonify({"data": {"status": subscriber.payment_status, "name": subscriber.name,
+                             "email": subscriber.email, "phone": subscriber.phone_number, "community_name": community_name }})
+
 
 @subscriber_bp.route('/signup', methods=['GET'])
 def subscriber_signup_info():

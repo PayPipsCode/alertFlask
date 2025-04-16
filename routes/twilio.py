@@ -2,6 +2,9 @@
 from flask import Blueprint, request, Response
 from twilio.twiml.voice_response import VoiceResponse
 import logging
+
+from app import db
+from models.call_logs import CallLog
 from utils.twilio_utils import initiate_twilio_call
 
 twilio_bp = Blueprint('twilio_bp', __name__)
@@ -10,18 +13,20 @@ twilio_bp = Blueprint('twilio_bp', __name__)
 RETRY_ATTEMPTS = {}
 MAX_RETRIES = 2  # Adjust as needed
 
+
 @twilio_bp.route('/voice', methods=['GET', 'POST'])
 def voice():
     # Retrieve the message to speak from query parameters
     msg = request.args.get('This is an alert from AlertBySyncgram.')
     logging.info("Generating TwiML voice response with message: %s", msg)
-    
+
     response = VoiceResponse()
     response.say(msg, voice='alice')
-    
+
     # Log the generated TwiML for debugging
     logging.debug("Generated TwiML: %s", response)
     return Response(str(response), mimetype='text/xml')
+
 
 @twilio_bp.route('/status_callback', methods=['POST'])
 def status_callback():
@@ -50,6 +55,9 @@ def status_callback():
         # If the call was successful, clear any retry count for this number
         if to_number in RETRY_ATTEMPTS:
             logging.debug("Clearing retry attempts for %s after successful call", to_number)
+            call_log = CallLog(phone_number=to_number)  # Mark the call as successful
+            db.session.add(call_log)
+            db.session.commit()
             del RETRY_ATTEMPTS[to_number]
-    
-    return ('', 204)
+
+    return '', 204

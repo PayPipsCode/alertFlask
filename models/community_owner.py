@@ -1,6 +1,7 @@
 # models/community_owner.py
 from app import db
 
+
 class CommunityOwner(db.Model):
     __tablename__ = 'community_owners'
     id = db.Column(db.Integer, primary_key=True)

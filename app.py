@@ -1,5 +1,6 @@
 from flask import Flask, send_from_directory
 from flask_cors import CORS
+
 from config import Config
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -8,6 +9,7 @@ import logging
 
 db = SQLAlchemy()
 migrate = Migrate()
+
 
 def create_app():
     base_dir = os.path.abspath(os.path.dirname(__file__))
@@ -35,11 +37,12 @@ def create_app():
     from routes.twilio import twilio_bp
     from routes.alerts import alerts_bp
     from routes.telegram_bot import telegram_bp
-
+    from routes.kora import kora_bp
 
     app.register_blueprint(owner_bp, url_prefix='/api/owner')
     app.register_blueprint(subscriber_bp, url_prefix='/api/subscriber')
     app.register_blueprint(paystack_bp, url_prefix='/api/paystack')
+    app.register_blueprint(kora_bp, url_prefix='/api/korapay')
     app.register_blueprint(twilio_bp, url_prefix='/api/twilio')
     app.register_blueprint(alerts_bp, url_prefix='/api/alerts')
     app.register_blueprint(telegram_bp, url_prefix='/telegram')

@@ -1,10 +1,13 @@
 from flask import Blueprint, request, jsonify, current_app
+
+from config import Config
 from models.community_owner import CommunityOwner
 from app import db
 import uuid
 import logging
 
 owner_bp = Blueprint('owner_bp', __name__)
+
 
 @owner_bp.route('/register', methods=['POST'])
 def register_owner():
@@ -14,15 +17,23 @@ def register_owner():
     email = data.get('email')
     phone = data.get('phone')
     community_name = data.get('community_name')
+    group_id = data.get('telegram_group_id')
     terms = data.get('terms')  # expected boolean
 
-    if not all([name, email, phone, community_name, terms]):
+    if not all([name, email, phone, community_name, terms, group_id]):
         logging.error("Missing required fields for owner registration")
         return jsonify({'error': 'Missing required fields'}), 400
     
     # Generate unique token and signup link
     token = str(uuid.uuid4())
-    unique_link = f"https://alertclient-production.up.railway.app/subscriber/signup?token={token}"
+    unique_link = f"{Config.FRONTEND_URL}/subscriber/signup?token={token}"
+
+    group = CommunityOwner.query.filter_by(group_chat_id=group_id).first()
+    if group:
+        return jsonify({
+            'message': 'Group already registered',
+            'unique_link': unique_link,
+        }), 200
 
     owner = CommunityOwner(
         name=name,
@@ -30,7 +41,8 @@ def register_owner():
         phone=phone,
         community_name=community_name,
         token=token,
-        unique_link=unique_link
+        unique_link=unique_link,
+        group_chat_id=group_id,
     )
     db.session.add(owner)
     db.session.commit()
@@ -39,8 +51,8 @@ def register_owner():
     return jsonify({
         'message': 'Registration successful',
         'unique_link': unique_link,
-        'telegram_bot_username': owner.telegram_bot_username
     }), 200
+
 
 @owner_bp.route('/dashboard', methods=['GET'])
 def owner_dashboard():
