@@ -1,4 +1,6 @@
 # backend/routes/subscriber.py
+import datetime
+
 from flask import Blueprint, request, jsonify
 from models.subscriber import Subscriber
 from models.community_owner import CommunityOwner
@@ -48,25 +50,35 @@ def register_subscriber():
         phone_number=phone_number,
         payment_plan="",
         community_owner_id=owner.id,
-        payment_status='pending'
+        payment_status='confirmed',
     )
+    today = datetime.datetime.now(tz=datetime.timezone.utc)
+    subscriber.start_date = today
+    subscriber.end_date = today + datetime.timedelta(days=30)
+    db.session.commit()
+
     db.session.add(subscriber)
     db.session.commit()
 
-    amount = 1000
-    
-    try:
-        payment_url = create_payment(subscriber, amount)
-    except Exception as e:
-        logging.exception("Failed to initialize payment")
-        return bad_request("Payment initialization failed", 500)
+    # amount = 1000
+    #
+    # try:
+    #     payment_url = create_payment(subscriber, amount)
+    # except Exception as e:
+    #     logging.exception("Failed to initialize payment")
+    #     return bad_request("Payment initialization failed", 500)
+    #
+    # logging.info(f"Subscriber registered: {name}")
+    # return jsonify({
+    #     'message': 'Registration successful. Proceed to payment.',
+    #     'subscriber_id': subscriber.id,
+    #     'payment_url': payment_url  # This URL will be used on the client side
+    # }), 200
 
-    logging.info(f"Subscriber registered: {name}")
-    return jsonify({
-        'message': 'Registration successful. Proceed to payment.',
-        'subscriber_id': subscriber.id,
-        'payment_url': payment_url  # This URL will be used on the client side
-    }), 200
+    community_name = subscriber.owner.community_name
+    return jsonify({"data": {"status": subscriber.payment_status, "name": subscriber.name,
+                             "email": subscriber.email, "phone": subscriber.phone_number,
+                             "community_name": community_name}})
 
 
 @subscriber_bp.route('/payment-status', methods=['GET'])
