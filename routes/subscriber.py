@@ -55,7 +55,6 @@ def register_subscriber():
     today = datetime.datetime.now(tz=datetime.timezone.utc)
     subscriber.start_date = today
     subscriber.end_date = today + datetime.timedelta(days=7)
-    db.session.commit()
 
     db.session.add(subscriber)
     db.session.commit()
